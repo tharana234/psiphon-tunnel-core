@@ -1,19 +1,40 @@
-name: Docker Image CI
+name: Build Docker Image for Psiphon
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "master" ]
+    branches:
+      - main
 
 jobs:
-
-  build:
-
+  build-docker:
+    name: Build Psiphon Docker Image
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-    run: cd  ConsoleClient
-      run: docker build --no-cache=true -t psiclient .
+      # Step 1: Checkout the Repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set Up Docker
+        # Ensures Docker is available
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Step 3: Build the Docker Image
+      - name: Build Docker Image
+        run: |
+          cd ConsoleClient
+          docker build --no-cache=true -t psiclient .
+
+      # Step 4: Save Docker Image as an Artifact
+      - name: Save Docker Image
+        run: |
+          docker save psiclient | gzip > psiclient.tar.gz
+      - name: Upload Docker Image
+        uses: actions/upload-artifact@v3
+        with:
+          name: psiclient-docker-image
+          path: psiclient.tar.gz
